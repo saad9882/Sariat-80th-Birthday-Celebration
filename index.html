@@ -1428,26 +1428,26 @@
           <div class="rsvp-seal-label">Tap Seal to RSVP</div>
         </div>
 
-        <!-- ONE-TIME PIN ENTRY CARD (SHOWN IF NO PIN IN URL) -->
+        <!-- ONE-TIME PIN ENTRY CARD (SHOWN IF NO PIN IN URL OR BEFORE PIN VERIFICATION) -->
         <div class="rsvp-card" id="rsvpPinPrompt" style="display: none; text-align: center; padding: 28px 18px;">
           <div
             style="font-family: 'Cinzel Decorative', serif; font-size: 13px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--gold-main); margin-bottom: 6px;">
-            Private Invitation
+            Invitation Verification Required
           </div>
           <h3
             style="font-family: 'Cinzel Decorative', serif; font-size: 20px; color: var(--maroon); margin-bottom: 10px; font-weight: 600;">
-            Enter Your Invitation PIN
+            Enter Your Invitation Code
           </h3>
           <p
             style="font-family: 'Cormorant Garamond', serif; font-size: 16px; color: var(--text-dark); margin-bottom: 18px; line-height: 1.5;">
-            Please enter the 4-digit PIN provided on your invitation card to access RSVP confirmation.
+            Please enter the invitation code provided on your card or WhatsApp invitation to unlock RSVP confirmation.
           </p>
           <div class="form-group" style="max-width: 260px; margin: 0 auto 16px;">
-            <input type="text" id="inputPinCode" class="form-control" placeholder="e.g. 2142" maxlength="10"
+            <input type="text" id="inputPinCode" class="form-control" placeholder="e.g. 1001" maxlength="12"
               style="text-align: center; font-size: 18px; letter-spacing: 0.2em; font-weight: 600; text-transform: uppercase;">
           </div>
           <button type="button" id="btnVerifyPin" class="btn-whatsapp" style="max-width: 260px; margin: 0 auto;">
-            <span>Verify PIN &amp; Continue</span>
+            <span>Verify Code &amp; Continue</span>
           </button>
           <div id="pinErrorMsg"
             style="color: var(--maroon); font-size: 13px; margin-top: 12px; display: none; font-weight: 600;"></div>
@@ -1462,11 +1462,11 @@
           </h3>
           <div
             style="font-family: 'Cinzel Decorative', serif; font-size: 13px; color: var(--gold-main); letter-spacing: 0.12em; margin-bottom: 16px;">
-            INVITATION PIN: <span id="usedPinNumber">2142</span>
+            INVITATION CODE: <span id="usedPinNumber">1001</span>
           </div>
           <p
             style="font-family: 'Cormorant Garamond', serif; font-size: 17px; color: var(--text-dark); line-height: 1.6; margin-bottom: 20px;">
-            This invitation link has already been used to confirm attendance. Each invitation link can only be used once
+            This invitation code has already been used to confirm attendance. Each invitation link/code can only be used once
             to prevent duplicate RSVPs.
           </p>
           <div
@@ -1475,8 +1475,8 @@
           </div>
         </div>
 
-        <!-- RSVP FORM CARD -->
-        <div class="rsvp-card" id="rsvpCardForm">
+        <!-- RSVP FORM CARD (HIDDEN UNTIL VERIFIED CODE IS PRESENT/ENTERED) -->
+        <div class="rsvp-card" id="rsvpCardForm" style="display: none;">
           <form id="birthdayRsvpForm">
             <div class="form-group">
               <label for="rsvpName">Invited Guest Full Name *</label>
@@ -1700,19 +1700,21 @@
       var btnVerifyPin = document.getElementById('btnVerifyPin');
       var pinErrorMsg = document.getElementById('pinErrorMsg');
 
-      function evaluateAndDisplayRsvpState(codeToTest) {
+      function evaluateAndDisplayRsvpState(codeToTest, shouldScroll) {
         var code = codeToTest || currentCode;
 
         if (pinErrorMsg) pinErrorMsg.style.display = 'none';
 
         if (!code) {
-          // No Code provided: show PIN Prompt Card
+          // No Code provided: hide RSVP form, show Code Prompt Card
           if (rsvpCardForm) rsvpCardForm.style.display = 'none';
           if (rsvpAlreadySubmitted) rsvpAlreadySubmitted.style.display = 'none';
           if (rsvpPinPrompt) {
             rsvpPinPrompt.style.display = 'block';
             rsvpPinPrompt.classList.add('visible');
-            rsvpPinPrompt.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            if (shouldScroll) {
+              rsvpPinPrompt.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
           }
           return;
         }
@@ -1725,25 +1727,31 @@
           if (rsvpAlreadySubmitted) {
             rsvpAlreadySubmitted.style.display = 'block';
             rsvpAlreadySubmitted.classList.add('visible');
-            rsvpAlreadySubmitted.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            if (shouldScroll) {
+              rsvpAlreadySubmitted.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
           }
         } else {
-          // CODE VALID & UNUSED: Show RSVP Form!
+          // CODE VALID & UNUSED: Unlock RSVP Form!
           if (rsvpPinPrompt) rsvpPinPrompt.style.display = 'none';
           if (rsvpAlreadySubmitted) rsvpAlreadySubmitted.style.display = 'none';
           if (rsvpCardForm) {
             rsvpCardForm.style.display = 'block';
             rsvpCardForm.classList.add('visible');
-            rsvpCardForm.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            if (shouldScroll) {
+              rsvpCardForm.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
           }
         }
       }
 
+      // Automatically evaluate RSVP state on page load
+      evaluateAndDisplayRsvpState(currentCode, false);
+
       // RSVP Seal Click Handler
       if (rsvpSealBtn) {
         rsvpSealBtn.addEventListener('click', function () {
-          rsvpSealBtn.style.pointerEvents = 'none';
-          evaluateAndDisplayRsvpState(currentCode);
+          evaluateAndDisplayRsvpState(currentCode, true);
         });
       }
 
@@ -1753,7 +1761,7 @@
           var val = inputPinCode.value.trim().toUpperCase();
           if (!val) {
             if (pinErrorMsg) {
-              pinErrorMsg.textContent = 'Please enter your 4-digit invitation code.';
+              pinErrorMsg.textContent = 'Please enter your invitation code (e.g. 1001).';
               pinErrorMsg.style.display = 'block';
             }
             return;
@@ -1761,7 +1769,7 @@
 
           if (!isValidCode(val)) {
             if (pinErrorMsg) {
-              pinErrorMsg.textContent = 'Invalid code. Please enter a valid 4-digit code.';
+              pinErrorMsg.textContent = 'Invalid code. Please enter a valid invitation code.';
               pinErrorMsg.style.display = 'block';
             }
             return;
@@ -1769,7 +1777,7 @@
 
           currentCode = val;
           if (pinErrorMsg) pinErrorMsg.style.display = 'none';
-          evaluateAndDisplayRsvpState(currentCode);
+          evaluateAndDisplayRsvpState(currentCode, true);
         }
 
         btnVerifyPin.addEventListener('click', verifyPinInput);
