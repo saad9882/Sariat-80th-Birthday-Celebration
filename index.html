@@ -1292,7 +1292,7 @@
           <h2 class="section-title">Good to Know</h2>
 
           <!-- Aso-Ebi Fashion Illustration -->
-          <img src="Aso-Ebi.png" alt="Aso-Ebi Fashion Illustration" class="aso-ebi-img">
+          <img src="aso-ebi.png" alt="Aso-Ebi Fashion Illustration" class="aso-ebi-img">
 
           <!-- Clean Vertical Pills without Borders or Background Box -->
           <div class="pill-column">
@@ -1325,6 +1325,43 @@
         <div class="rsvp-seal-trigger" id="rsvpSealBtn" role="button" tabindex="0">
           <img class="rsvp-seal-img" src="rsvp-seal.png" alt="RSVP Seal" onerror="this.src='wax_seal_1.png'">
           <div class="rsvp-seal-label">Tap Seal to RSVP</div>
+        </div>
+
+        <!-- ONE-TIME PIN ENTRY CARD (SHOWN IF NO PIN IN URL) -->
+        <div class="rsvp-card" id="rsvpPinPrompt" style="display: none; text-align: center; padding: 28px 18px;">
+          <div style="font-family: 'Cinzel Decorative', serif; font-size: 13px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--gold-main); margin-bottom: 6px;">
+            Private Invitation
+          </div>
+          <h3 style="font-family: 'Cinzel Decorative', serif; font-size: 20px; color: var(--maroon); margin-bottom: 10px; font-weight: 600;">
+            Enter Your Invitation PIN
+          </h3>
+          <p style="font-family: 'Cormorant Garamond', serif; font-size: 16px; color: var(--text-dark); margin-bottom: 18px; line-height: 1.5;">
+            Please enter the 4-digit PIN provided on your invitation card to access RSVP confirmation.
+          </p>
+          <div class="form-group" style="max-width: 260px; margin: 0 auto 16px;">
+            <input type="text" id="inputPinCode" class="form-control" placeholder="e.g. 2142" maxlength="10" style="text-align: center; font-size: 18px; letter-spacing: 0.2em; font-weight: 600; text-transform: uppercase;">
+          </div>
+          <button type="button" id="btnVerifyPin" class="btn-whatsapp" style="max-width: 260px; margin: 0 auto;">
+            <span>Verify PIN &amp; Continue</span>
+          </button>
+          <div id="pinErrorMsg" style="color: var(--maroon); font-size: 13px; margin-top: 12px; display: none; font-weight: 600;"></div>
+        </div>
+
+        <!-- ALREADY SUBMITTED CARD (SHOWN IF PIN LINK HAS ALREADY BEEN USED) -->
+        <div class="rsvp-card" id="rsvpAlreadySubmitted" style="display: none; text-align: center; padding: 28px 18px;">
+          <div style="font-size: 42px; color: var(--gold-main); margin-bottom: 8px; line-height: 1;">✓</div>
+          <h3 style="font-family: 'Cinzel Decorative', serif; font-size: 22px; color: var(--maroon); margin-bottom: 8px; font-weight: 600;">
+            RSVP Already Submitted
+          </h3>
+          <div style="font-family: 'Cinzel Decorative', serif; font-size: 13px; color: var(--gold-main); letter-spacing: 0.12em; margin-bottom: 16px;">
+            INVITATION PIN: <span id="usedPinNumber">2142</span>
+          </div>
+          <p style="font-family: 'Cormorant Garamond', serif; font-size: 17px; color: var(--text-dark); line-height: 1.6; margin-bottom: 20px;">
+            This invitation link has already been used to confirm attendance. Each invitation link can only be used once to prevent duplicate RSVPs.
+          </p>
+          <div style="font-size: 14px; color: var(--text-brown); border-top: 1px dashed rgba(166, 125, 43, 0.3); padding-top: 14px;">
+            If you need to make changes, please contact Mrs. Abiola Ajani at <strong>+234 802 346 7360</strong>.
+          </div>
         </div>
 
         <!-- RSVP FORM CARD -->
@@ -1375,7 +1412,7 @@
 
           <div class="rsvp-success-message" id="rsvpSuccess">
             <h4>Thank You!</h4>
-            <p>Your RSVP has been submitted successfully to Mama's event Team.</p>
+            <p>Your RSVP has been submitted successfully to Mama's event team via Web3Forms.</p>
           </div>
         </div>
 
@@ -1506,13 +1543,108 @@
         }
       });
 
-      // RSVP SEAL CLICK HANDLER TO REVEAL FORM
-      if (rsvpSealBtn && rsvpCardForm) {
+      // ONE-TIME INVITATION PIN SYSTEM (MATCHING ?pin=2142 SAMPLE)
+      function getUrlPin() {
+        var params = new URLSearchParams(window.location.search);
+        var p = params.get('pin') || params.get('code') || params.get('id');
+        return p ? p.trim().toUpperCase() : '';
+      }
+
+      function isPinUsed(pin) {
+        if (!pin) return false;
+        try {
+          var usedMap = JSON.parse(localStorage.getItem('sariat80_used_pins') || '{}');
+          return !!usedMap[pin];
+        } catch(e) {
+          return false;
+        }
+      }
+
+      function markPinAsUsed(pin, guestName) {
+        if (!pin) return;
+        try {
+          var usedMap = JSON.parse(localStorage.getItem('sariat80_used_pins') || '{}');
+          usedMap[pin] = { name: guestName, date: new Date().toISOString() };
+          localStorage.setItem('sariat80_used_pins', JSON.stringify(usedMap));
+        } catch(e) {}
+      }
+
+      var currentPin = getUrlPin();
+      var rsvpSealBtn = document.getElementById('rsvpSealBtn');
+      var rsvpCardForm = document.getElementById('rsvpCardForm');
+      var rsvpPinPrompt = document.getElementById('rsvpPinPrompt');
+      var rsvpAlreadySubmitted = document.getElementById('rsvpAlreadySubmitted');
+      var usedPinNumber = document.getElementById('usedPinNumber');
+      var inputPinCode = document.getElementById('inputPinCode');
+      var btnVerifyPin = document.getElementById('btnVerifyPin');
+      var pinErrorMsg = document.getElementById('pinErrorMsg');
+
+      function showCorrectRsvpState(pinToUse) {
+        var pin = pinToUse || currentPin;
+        if (!pin) {
+          // No PIN: show PIN prompt card
+          if (rsvpCardForm) rsvpCardForm.style.display = 'none';
+          if (rsvpAlreadySubmitted) rsvpAlreadySubmitted.style.display = 'none';
+          if (rsvpPinPrompt) {
+            rsvpPinPrompt.style.display = 'block';
+            rsvpPinPrompt.classList.add('visible');
+            rsvpPinPrompt.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+          return;
+        }
+
+        if (isPinUsed(pin)) {
+          // PIN ALREADY USED: Lock RSVP form & show Already Submitted card!
+          if (rsvpCardForm) rsvpCardForm.style.display = 'none';
+          if (rsvpPinPrompt) rsvpPinPrompt.style.display = 'none';
+          if (usedPinNumber) usedPinNumber.textContent = pin;
+          if (rsvpAlreadySubmitted) {
+            rsvpAlreadySubmitted.style.display = 'block';
+            rsvpAlreadySubmitted.classList.add('visible');
+            rsvpAlreadySubmitted.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+        } else {
+          // PIN VALID & UNUSED: Show RSVP Form
+          if (rsvpPinPrompt) rsvpPinPrompt.style.display = 'none';
+          if (rsvpAlreadySubmitted) rsvpAlreadySubmitted.style.display = 'none';
+          if (rsvpCardForm) {
+            rsvpCardForm.style.display = 'block';
+            rsvpCardForm.classList.add('visible');
+            rsvpCardForm.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+        }
+      }
+
+      // RSVP SEAL CLICK HANDLER
+      if (rsvpSealBtn) {
         rsvpSealBtn.addEventListener('click', function () {
-          rsvpCardForm.style.display = 'block';
-          rsvpCardForm.classList.add('visible');
           rsvpSealBtn.style.pointerEvents = 'none';
-          rsvpCardForm.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          showCorrectRsvpState(currentPin);
+        });
+      }
+
+      // PIN VERIFY BUTTON HANDLER
+      if (btnVerifyPin && inputPinCode) {
+        function verifyAndContinue() {
+          var val = inputPinCode.value.trim().toUpperCase();
+          if (!val) {
+            if (pinErrorMsg) {
+              pinErrorMsg.textContent = 'Please enter your 4-digit PIN.';
+              pinErrorMsg.style.display = 'block';
+            }
+            return;
+          }
+          currentPin = val;
+          if (pinErrorMsg) pinErrorMsg.style.display = 'none';
+          showCorrectRsvpState(currentPin);
+        }
+
+        btnVerifyPin.addEventListener('click', verifyAndContinue);
+        inputPinCode.addEventListener('keypress', function(e) {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            verifyAndContinue();
+          }
         });
       }
 
@@ -1673,6 +1805,9 @@
             btnSubmitRsvp.innerHTML = '<span>Sending RSVP...</span>';
           }
 
+          var activePin = currentPin || ('GENERAL_' + Date.now());
+          markPinAsUsed(activePin, name);
+
           // Store local record safely
           try {
             var rsvpData = {
@@ -1682,6 +1817,7 @@
               guestName: guestName,
               totalGuests: totalGuestsCount,
               message: message,
+              pinUsed: activePin,
               timestamp: new Date().toISOString()
             };
             localStorage.setItem('sariat80_rsvp_' + Date.now(), JSON.stringify(rsvpData));
@@ -1712,6 +1848,7 @@
               access_key: '3bf8f4dd-29fe-46ba-8eb3-0b9eb3913a6f',
               subject: 'New RSVP: ' + name + ' (Alhaja Sariat 80th Birthday)',
               from_name: 'Alhaja Sariat 80th Birthday Website',
+              "Invitation PIN Used": activePin,
               "Invited Guest Name": name,
               "Attendance Status": attendanceText,
               "Bringing Accompanying Guest (+1)": hasPlusOne ? 'Yes (1 Additional Guest)' : 'No (Attending Alone)',
