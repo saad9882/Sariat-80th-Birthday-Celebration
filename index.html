@@ -1667,8 +1667,8 @@
 
       function isValidCode(code) {
         if (!code) return false;
-        // Supports any 3-12 character code or 4-digit number (1000-9999)
-        return /^[A-Z0-9]{3,12}$/.test(code);
+        // Supports any custom client-created code (e.g., 1001, ABIOLA, VIP-01, SARIAT80, etc.)
+        return /^[A-Z0-9_\-]{2,20}$/.test(code);
       }
 
       function isCodeUsed(code) {
