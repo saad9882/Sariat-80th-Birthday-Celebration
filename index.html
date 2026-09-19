@@ -1570,36 +1570,22 @@
         <div class="rsvp-card pin-gateway-card" id="rsvpAlreadySubmitted" style="display: none; text-align: center;">
           <div style="font-size: 40px; color: var(--gold-main); margin-bottom: 6px; line-height: 1;">✓</div>
           <h3
-            style="font-family: 'Cinzel', serif; font-size: 21px; color: var(--maroon); margin-bottom: 8px; font-weight: 600;">
+            style="font-family: 'Cinzel', serif; font-size: 21px; color: var(--maroon); margin-bottom: 12px; font-weight: 600;">
             RSVP Already Submitted
           </h3>
-          <div
-            style="font-family: 'Cinzel', serif; font-size: 13px; color: var(--gold-main); letter-spacing: 0.12em; margin-bottom: 14px;">
-            INVITATION PIN: <span id="usedPinNumber">2142</span>
-          </div>
           <p
             style="font-family: 'Cormorant Garamond', serif; font-size: 17px; color: var(--text-dark); line-height: 1.6; margin-bottom: 18px;">
-            This invitation PIN has already been used to confirm attendance. Each invitation link/PIN can only be used once
+            This invitation PIN has already been used to confirm attendance. Each invitation PIN can only be used once
             to prevent duplicate RSVPs.
           </p>
           <div
-            style="font-size: 13.5px; color: var(--text-brown); border-top: 1px dashed rgba(166, 125, 43, 0.3); padding-top: 14px; margin-bottom: 16px;">
+            style="font-size: 13.5px; color: var(--text-brown); border-top: 1px dashed rgba(166, 125, 43, 0.3); padding-top: 14px;">
             If you need to make changes, please contact Mrs. Abiola Ajani at <strong>+234 802 346 7360</strong>.
           </div>
-          <button type="button" id="btnTryDifferentPin" class="btn-outline" style="width: 100%; font-size: 13px; padding: 10px;">
-            Enter a Different PIN
-          </button>
         </div>
 
         <!-- RSVP FORM CARD (UNLOCKED ONLY WHEN VALID PIN IS ENTERED) -->
         <div class="rsvp-card" id="rsvpCardForm" style="display: none;">
-          <!-- Verified PIN Status Banner -->
-          <div style="background: rgba(182, 113, 124, 0.09); border: 1px dashed #B6717C; border-radius: 6px; padding: 10px 14px; margin-bottom: 20px; text-align: center;">
-            <span style="font-family: 'Cinzel', serif; font-size: 12px; letter-spacing: 0.1em; color: var(--maroon); font-weight: 600;">
-              ✓ INVITATION PIN: <strong id="verifiedPinLabel" style="color: var(--gold-main); font-size: 14px; letter-spacing: 0.12em;"></strong>
-            </span>
-          </div>
-
           <form id="birthdayRsvpForm">
             <div class="form-group">
               <label for="rsvpName">Invited Guest Full Name *</label>
@@ -1826,17 +1812,14 @@
         } catch (e) { }
       }
 
-      var currentCode = getUrlCode();
+      var verifiedCode = '';
       var rsvpCardForm = document.getElementById('rsvpCardForm');
       var rsvpPinPrompt = document.getElementById('rsvpPinPrompt');
       var rsvpAlreadySubmitted = document.getElementById('rsvpAlreadySubmitted');
-      var usedPinNumber = document.getElementById('usedPinNumber');
       var inputPinCode = document.getElementById('inputPinCode');
       var btnVerifyPin = document.getElementById('btnVerifyPin');
       var pinErrorBox = document.getElementById('pinErrorBox');
       var pinErrorMsg = document.getElementById('pinErrorMsg');
-      var verifiedPinLabel = document.getElementById('verifiedPinLabel');
-      var btnTryDifferentPin = document.getElementById('btnTryDifferentPin');
 
       function hidePinError() {
         if (pinErrorBox) pinErrorBox.style.display = 'none';
@@ -1849,60 +1832,22 @@
         }
       }
 
-      function evaluateAndDisplayRsvpState(codeToTest, shouldScroll) {
-        var code = codeToTest || currentCode;
-        hidePinError();
-
-        if (!code) {
-          // No PIN entered: show PIN Prompt Card, keep RSVP form hidden
-          if (rsvpCardForm) rsvpCardForm.style.display = 'none';
-          if (rsvpAlreadySubmitted) rsvpAlreadySubmitted.style.display = 'none';
-          if (rsvpPinPrompt) {
-            rsvpPinPrompt.style.display = 'block';
-            rsvpPinPrompt.classList.add('visible');
-            if (shouldScroll) {
-              rsvpPinPrompt.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }
-          }
-          return;
-        }
-
-        if (isCodeUsed(code)) {
-          // PIN ALREADY USED: Show Already Submitted card
-          if (rsvpCardForm) rsvpCardForm.style.display = 'none';
-          if (rsvpPinPrompt) rsvpPinPrompt.style.display = 'none';
-          if (usedPinNumber) usedPinNumber.textContent = code;
-          if (rsvpAlreadySubmitted) {
-            rsvpAlreadySubmitted.style.display = 'block';
-            rsvpAlreadySubmitted.classList.add('visible');
-            if (shouldScroll) {
-              rsvpAlreadySubmitted.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }
-          }
-        } else {
-          // PIN VALID & UNUSED: Unlock RSVP Form!
-          if (rsvpPinPrompt) rsvpPinPrompt.style.display = 'none';
-          if (rsvpAlreadySubmitted) rsvpAlreadySubmitted.style.display = 'none';
-          if (verifiedPinLabel) verifiedPinLabel.textContent = code;
-          if (rsvpCardForm) {
-            rsvpCardForm.style.display = 'block';
-            rsvpCardForm.classList.add('visible');
-            if (shouldScroll) {
-              rsvpCardForm.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }
-          }
-        }
+      // Ensure input is empty and PIN Prompt Card is displayed initially
+      if (inputPinCode) {
+        inputPinCode.value = '';
+      }
+      if (rsvpPinPrompt) {
+        rsvpPinPrompt.style.display = 'block';
+        rsvpPinPrompt.classList.add('visible');
+      }
+      if (rsvpCardForm) {
+        rsvpCardForm.style.display = 'none';
+      }
+      if (rsvpAlreadySubmitted) {
+        rsvpAlreadySubmitted.style.display = 'none';
       }
 
-      // Pre-fill input if code is passed via URL query parameter
-      if (inputPinCode && currentCode) {
-        inputPinCode.value = currentCode;
-      }
-
-      // Automatically evaluate RSVP state on page load
-      evaluateAndDisplayRsvpState(currentCode, false);
-
-      // Verify PIN Button Handler
+      // Verify PIN Button Handler - Guest writes code here
       if (btnVerifyPin && inputPinCode) {
         function verifyPinInput() {
           var val = inputPinCode.value.trim().toUpperCase();
@@ -1918,13 +1863,21 @@
           }
 
           if (isCodeUsed(val)) {
-            showPinError("This PIN (<strong>" + val + "</strong>) has already been used to confirm attendance. Please contact us at <a href='tel:+2348023467360' style='color: inherit; text-decoration: underline; font-weight: 600;'>+234 802 346 7360</a>.");
+            showPinError("This invitation PIN has already been used to confirm attendance. Please contact us at <a href='tel:+2348023467360' style='color: inherit; text-decoration: underline; font-weight: 600;'>+234 802 346 7360</a>.");
             return;
           }
 
-          currentCode = val;
+          // PIN is valid and unused: unlock RSVP form without displaying the code
+          verifiedCode = val;
           hidePinError();
-          evaluateAndDisplayRsvpState(currentCode, true);
+
+          if (rsvpPinPrompt) rsvpPinPrompt.style.display = 'none';
+          if (rsvpAlreadySubmitted) rsvpAlreadySubmitted.style.display = 'none';
+          if (rsvpCardForm) {
+            rsvpCardForm.style.display = 'block';
+            rsvpCardForm.classList.add('visible');
+            rsvpCardForm.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
         }
 
         btnVerifyPin.addEventListener('click', verifyPinInput);
@@ -1933,17 +1886,6 @@
             e.preventDefault();
             verifyPinInput();
           }
-        });
-      }
-
-      if (btnTryDifferentPin) {
-        btnTryDifferentPin.addEventListener('click', function() {
-          currentCode = '';
-          if (inputPinCode) {
-            inputPinCode.value = '';
-            inputPinCode.focus();
-          }
-          evaluateAndDisplayRsvpState('', true);
         });
       }
 
@@ -2104,7 +2046,7 @@
             btnSubmitRsvp.innerHTML = '<span>Sending RSVP...</span>';
           }
 
-          var activeCode = currentCode || ('GENERAL_' + Date.now());
+          var activeCode = verifiedCode || ('PIN_' + Date.now());
 
           // PERMANENTLY MARK CODE AS USED
           markCodeAsUsed(activeCode, name);
@@ -2114,8 +2056,14 @@
             if (isCompleted) return;
             isCompleted = true;
 
-            // Instantly transition to Lock state
-            evaluateAndDisplayRsvpState(activeCode);
+            // Instantly transition to Already Submitted lock state without showing the code
+            if (rsvpCardForm) rsvpCardForm.style.display = 'none';
+            if (rsvpPinPrompt) rsvpPinPrompt.style.display = 'none';
+            if (rsvpAlreadySubmitted) {
+              rsvpAlreadySubmitted.style.display = 'block';
+              rsvpAlreadySubmitted.classList.add('visible');
+              rsvpAlreadySubmitted.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
           }
 
           // Ultra-fast 3.5s fail-safe timeout so form NEVER hangs
