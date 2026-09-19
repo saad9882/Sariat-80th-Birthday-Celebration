@@ -996,6 +996,118 @@
       }
     }
 
+    /* PIN GATEWAY CARD (NIRE & TOSIN STYLE) */
+    .pin-gateway-card {
+      background: #FFFFFF !important;
+      border: 1px solid rgba(166, 125, 43, 0.2) !important;
+      border-radius: 8px !important;
+      box-shadow: 0 10px 32px rgba(44, 24, 16, 0.08) !important;
+      padding: 34px 22px !important;
+      max-width: 440px !important;
+      margin: 18px auto 0 !important;
+    }
+
+    .pin-input-box {
+      width: 100%;
+      height: 58px;
+      background: #FFFFFF;
+      border: 1.5px solid #D6B4BC;
+      border-radius: 4px;
+      text-align: center;
+      font-size: 22px;
+      font-weight: 600;
+      letter-spacing: 0.35em;
+      color: #3A231C;
+      text-transform: uppercase;
+      transition: border-color 0.25s, box-shadow 0.25s;
+      box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.03);
+    }
+
+    .pin-input-box:focus {
+      outline: none;
+      border-color: #A45D69;
+      box-shadow: 0 0 0 3.5px rgba(164, 93, 105, 0.18);
+    }
+
+    .pin-input-box::placeholder {
+      color: #C2A5AC;
+      letter-spacing: 0.4em;
+      font-weight: 400;
+    }
+
+    .btn-pin-continue {
+      width: 100%;
+      max-width: 280px;
+      margin: 0 auto;
+      padding: 14px 22px;
+      background: #B6717C;
+      background: linear-gradient(135deg, #A45D69 0%, #8E4451 100%);
+      border: none;
+      border-radius: 4px;
+      color: #FFFFFF;
+      font-family: 'Jost', sans-serif;
+      font-size: 13.5px;
+      font-weight: 600;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: background 0.25s, transform 0.15s, box-shadow 0.25s;
+      box-shadow: 0 5px 16px rgba(142, 68, 81, 0.35);
+      display: block;
+    }
+
+    .btn-pin-continue:hover {
+      background: linear-gradient(135deg, #8E4451 0%, #75333F 100%);
+      box-shadow: 0 7px 22px rgba(142, 68, 81, 0.45);
+      transform: translateY(-1px);
+    }
+
+    .btn-pin-continue:active {
+      transform: scale(0.98);
+    }
+
+    .pin-error-box {
+      background: #FAF0F1;
+      border: 1px solid #F0CCD1;
+      border-radius: 4px;
+      color: #7A2633;
+      font-family: 'Jost', sans-serif;
+      font-size: 13.5px;
+      line-height: 1.55;
+      padding: 13px 16px;
+      margin: 20px auto 0;
+      max-width: 320px;
+      text-align: center;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .pin-footer-divider {
+      position: relative;
+      text-align: center;
+      margin: 30px 0 16px;
+    }
+
+    .pin-footer-divider::before {
+      content: "";
+      position: absolute;
+      top: 50%;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: #E8DDDF;
+    }
+
+    .pin-footer-divider span {
+      position: relative;
+      background: #FFFFFF;
+      padding: 0 14px;
+      font-family: 'Cinzel', serif;
+      font-size: 11px;
+      letter-spacing: 0.18em;
+      color: #9C8C90;
+      font-weight: 600;
+    }
+
     .form-group {
       margin-bottom: 18px;
     }
@@ -1417,66 +1529,78 @@
       </div>
     </section>
 
-    <!-- PAGE 6: RSVP & FINALE (NO EMOJIS) -->
+    <!-- PAGE 6: RSVP & FINALE (NIRE & TOSIN STYLE PIN GATEWAY) -->
     <section class="page page-6" id="page6">
       <div class="page-content" style="flex: 1; justify-content: center;">
-        <div class="section-eyebrow">Kindly let us know</div>
-        <h2 class="section-title">Confirm Your Attendance</h2>
+        <div class="section-eyebrow" style="letter-spacing: 0.24em; font-size: 12.5px; color: #B6717C; text-transform: uppercase; font-family: 'Cinzel', serif; margin-bottom: 4px;">Kindly Respond</div>
+        <h2 class="section-title" style="font-family: 'Cinzel', serif; font-size: 38px; letter-spacing: 0.08em; font-weight: 400; color: #2C1810; margin: 0 0 6px;">RSVP</h2>
+        <div style="font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 18px; color: #7A6B63; margin-bottom: 22px;">Please respond by December 1, 2026</div>
 
-        <div class="rsvp-seal-trigger" id="rsvpSealBtn" role="button" tabindex="0">
-          <img class="rsvp-seal-img" src="rsvp-seal.png" alt="RSVP Seal" onerror="this.src='wax_seal_1.png'">
-          <div class="rsvp-seal-label">Tap Seal to RSVP</div>
-        </div>
-
-        <!-- ONE-TIME PIN ENTRY CARD (SHOWN IF NO PIN IN URL OR BEFORE PIN VERIFICATION) -->
-        <div class="rsvp-card" id="rsvpPinPrompt" style="display: none; text-align: center; padding: 28px 18px;">
-          <div
-            style="font-family: 'Cinzel Decorative', serif; font-size: 13px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--gold-main); margin-bottom: 6px;">
-            Invitation Verification Required
+        <!-- ONE-TIME PIN ENTRY CARD (MATCHING NIRE & TOSIN REFERENCE SCREENSHOT) -->
+        <div class="rsvp-card pin-gateway-card" id="rsvpPinPrompt" style="display: block; text-align: center;">
+          <div style="font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 23px; color: #3A231C; margin-bottom: 6px;">
+            Enter your invitation PIN
           </div>
-          <h3
-            style="font-family: 'Cinzel Decorative', serif; font-size: 20px; color: var(--maroon); margin-bottom: 10px; font-weight: 600;">
-            Enter Your Invitation Code
-          </h3>
-          <p
-            style="font-family: 'Cormorant Garamond', serif; font-size: 16px; color: var(--text-dark); margin-bottom: 18px; line-height: 1.5;">
-            Please enter the invitation code provided on your card or WhatsApp invitation to unlock RSVP confirmation.
+          <p style="font-family: 'Jost', sans-serif; font-size: 13.5px; color: #7A6B63; margin-bottom: 24px; line-height: 1.5;">
+            Your unique PIN was included with your invitation
           </p>
-          <div class="form-group" style="max-width: 260px; margin: 0 auto 16px;">
-            <input type="text" id="inputPinCode" class="form-control" placeholder="e.g. 1001" maxlength="12"
-              style="text-align: center; font-size: 18px; letter-spacing: 0.2em; font-weight: 600; text-transform: uppercase;">
+          <div class="form-group" style="max-width: 280px; margin: 0 auto 18px;">
+            <input type="text" id="inputPinCode" class="pin-input-box" placeholder="• • • •" maxlength="12"
+              autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false">
           </div>
-          <button type="button" id="btnVerifyPin" class="btn-whatsapp" style="max-width: 260px; margin: 0 auto;">
-            <span>Verify Code &amp; Continue</span>
+          <button type="button" id="btnVerifyPin" class="btn-pin-continue">
+            <span>CONTINUE &rarr;</span>
           </button>
-          <div id="pinErrorMsg"
-            style="color: var(--maroon); font-size: 13px; margin-top: 12px; display: none; font-weight: 600;"></div>
+
+          <!-- Error Alert Container (Matching screenshot's light pink box) -->
+          <div id="pinErrorBox" class="pin-error-box" style="display: none;">
+            <span id="pinErrorMsg">That PIN wasn't found. Please double-check your invitation or contact us at <a href="tel:+2348023467360" style="color: inherit; text-decoration: underline; font-weight: 600;">+234 802 346 7360</a>.</span>
+          </div>
+
+          <!-- Divider & Contact info -->
+          <div class="pin-footer-divider">
+            <span>DON'T HAVE YOUR PIN?</span>
+          </div>
+          <div style="font-family: 'Jost', sans-serif; font-size: 13px; color: #7A6B63;">
+            Please contact Mrs. Abiola Ajani at <a href="tel:+2348023467360" style="color: var(--maroon); font-weight: 600; text-decoration: none;">+234 802 346 7360</a>
+          </div>
         </div>
 
-        <!-- ALREADY SUBMITTED CARD (SHOWN IF PIN LINK HAS ALREADY BEEN USED) -->
-        <div class="rsvp-card" id="rsvpAlreadySubmitted" style="display: none; text-align: center; padding: 28px 18px;">
-          <div style="font-size: 42px; color: var(--gold-main); margin-bottom: 8px; line-height: 1;">✓</div>
+        <!-- ALREADY SUBMITTED CARD (SHOWN IF PIN HAS ALREADY BEEN USED) -->
+        <div class="rsvp-card pin-gateway-card" id="rsvpAlreadySubmitted" style="display: none; text-align: center;">
+          <div style="font-size: 40px; color: var(--gold-main); margin-bottom: 6px; line-height: 1;">✓</div>
           <h3
-            style="font-family: 'Cinzel Decorative', serif; font-size: 22px; color: var(--maroon); margin-bottom: 8px; font-weight: 600;">
+            style="font-family: 'Cinzel', serif; font-size: 21px; color: var(--maroon); margin-bottom: 8px; font-weight: 600;">
             RSVP Already Submitted
           </h3>
           <div
-            style="font-family: 'Cinzel Decorative', serif; font-size: 13px; color: var(--gold-main); letter-spacing: 0.12em; margin-bottom: 16px;">
-            INVITATION CODE: <span id="usedPinNumber">1001</span>
+            style="font-family: 'Cinzel', serif; font-size: 13px; color: var(--gold-main); letter-spacing: 0.12em; margin-bottom: 14px;">
+            INVITATION PIN: <span id="usedPinNumber">2142</span>
           </div>
           <p
-            style="font-family: 'Cormorant Garamond', serif; font-size: 17px; color: var(--text-dark); line-height: 1.6; margin-bottom: 20px;">
-            This invitation code has already been used to confirm attendance. Each invitation link/code can only be used once
+            style="font-family: 'Cormorant Garamond', serif; font-size: 17px; color: var(--text-dark); line-height: 1.6; margin-bottom: 18px;">
+            This invitation PIN has already been used to confirm attendance. Each invitation link/PIN can only be used once
             to prevent duplicate RSVPs.
           </p>
           <div
-            style="font-size: 14px; color: var(--text-brown); border-top: 1px dashed rgba(166, 125, 43, 0.3); padding-top: 14px;">
+            style="font-size: 13.5px; color: var(--text-brown); border-top: 1px dashed rgba(166, 125, 43, 0.3); padding-top: 14px; margin-bottom: 16px;">
             If you need to make changes, please contact Mrs. Abiola Ajani at <strong>+234 802 346 7360</strong>.
           </div>
+          <button type="button" id="btnTryDifferentPin" class="btn-outline" style="width: 100%; font-size: 13px; padding: 10px;">
+            Enter a Different PIN
+          </button>
         </div>
 
-        <!-- RSVP FORM CARD (HIDDEN UNTIL VERIFIED CODE IS PRESENT/ENTERED) -->
+        <!-- RSVP FORM CARD (UNLOCKED ONLY WHEN VALID PIN IS ENTERED) -->
         <div class="rsvp-card" id="rsvpCardForm" style="display: none;">
+          <!-- Verified PIN Status Banner -->
+          <div style="background: rgba(182, 113, 124, 0.09); border: 1px dashed #B6717C; border-radius: 6px; padding: 10px 14px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between;">
+            <span style="font-family: 'Cinzel', serif; font-size: 12px; letter-spacing: 0.08em; color: var(--maroon); font-weight: 600;">
+              ✓ PIN VERIFIED: <strong id="verifiedPinLabel" style="color: var(--gold-main); font-size: 13.5px;"></strong>
+            </span>
+            <button type="button" id="btnChangePin" style="background: none; border: none; font-size: 12px; color: var(--text-brown); text-decoration: underline; cursor: pointer; font-family: 'Jost', sans-serif;">Change PIN</button>
+          </div>
+
           <form id="birthdayRsvpForm">
             <div class="form-group">
               <label for="rsvpName">Invited Guest Full Name *</label>
@@ -1704,22 +1828,35 @@
       }
 
       var currentCode = getUrlCode();
-      var rsvpSealBtn = document.getElementById('rsvpSealBtn');
       var rsvpCardForm = document.getElementById('rsvpCardForm');
       var rsvpPinPrompt = document.getElementById('rsvpPinPrompt');
       var rsvpAlreadySubmitted = document.getElementById('rsvpAlreadySubmitted');
       var usedPinNumber = document.getElementById('usedPinNumber');
       var inputPinCode = document.getElementById('inputPinCode');
       var btnVerifyPin = document.getElementById('btnVerifyPin');
+      var pinErrorBox = document.getElementById('pinErrorBox');
       var pinErrorMsg = document.getElementById('pinErrorMsg');
+      var verifiedPinLabel = document.getElementById('verifiedPinLabel');
+      var btnChangePin = document.getElementById('btnChangePin');
+      var btnTryDifferentPin = document.getElementById('btnTryDifferentPin');
+
+      function hidePinError() {
+        if (pinErrorBox) pinErrorBox.style.display = 'none';
+      }
+
+      function showPinError(messageHtml) {
+        if (pinErrorBox && pinErrorMsg) {
+          pinErrorMsg.innerHTML = messageHtml;
+          pinErrorBox.style.display = 'block';
+        }
+      }
 
       function evaluateAndDisplayRsvpState(codeToTest, shouldScroll) {
         var code = codeToTest || currentCode;
-
-        if (pinErrorMsg) pinErrorMsg.style.display = 'none';
+        hidePinError();
 
         if (!code) {
-          // No Code provided: hide RSVP form, show Code Prompt Card
+          // No PIN entered: show PIN Prompt Card, keep RSVP form hidden
           if (rsvpCardForm) rsvpCardForm.style.display = 'none';
           if (rsvpAlreadySubmitted) rsvpAlreadySubmitted.style.display = 'none';
           if (rsvpPinPrompt) {
@@ -1733,7 +1870,7 @@
         }
 
         if (isCodeUsed(code)) {
-          // CODE ALREADY USED: Lock RSVP form and show Already Submitted card!
+          // PIN ALREADY USED: Show Already Submitted card
           if (rsvpCardForm) rsvpCardForm.style.display = 'none';
           if (rsvpPinPrompt) rsvpPinPrompt.style.display = 'none';
           if (usedPinNumber) usedPinNumber.textContent = code;
@@ -1745,9 +1882,10 @@
             }
           }
         } else {
-          // CODE VALID & UNUSED: Unlock RSVP Form!
+          // PIN VALID & UNUSED: Unlock RSVP Form!
           if (rsvpPinPrompt) rsvpPinPrompt.style.display = 'none';
           if (rsvpAlreadySubmitted) rsvpAlreadySubmitted.style.display = 'none';
+          if (verifiedPinLabel) verifiedPinLabel.textContent = code;
           if (rsvpCardForm) {
             rsvpCardForm.style.display = 'block';
             rsvpCardForm.classList.add('visible');
@@ -1758,38 +1896,36 @@
         }
       }
 
+      // Pre-fill input if code is passed via URL query parameter
+      if (inputPinCode && currentCode) {
+        inputPinCode.value = currentCode;
+      }
+
       // Automatically evaluate RSVP state on page load
       evaluateAndDisplayRsvpState(currentCode, false);
-
-      // RSVP Seal Click Handler
-      if (rsvpSealBtn) {
-        rsvpSealBtn.addEventListener('click', function () {
-          evaluateAndDisplayRsvpState(currentCode, true);
-        });
-      }
 
       // Verify PIN Button Handler
       if (btnVerifyPin && inputPinCode) {
         function verifyPinInput() {
           var val = inputPinCode.value.trim().toUpperCase();
           if (!val) {
-            if (pinErrorMsg) {
-              pinErrorMsg.textContent = 'Please enter your invitation code (e.g. 1001).';
-              pinErrorMsg.style.display = 'block';
-            }
+            showPinError('Please enter your invitation PIN.');
+            inputPinCode.focus();
             return;
           }
 
           if (!isValidCode(val)) {
-            if (pinErrorMsg) {
-              pinErrorMsg.textContent = 'Invalid code. Please enter a valid invitation code.';
-              pinErrorMsg.style.display = 'block';
-            }
+            showPinError("That PIN wasn't found. Please double-check your invitation or contact us at <a href='tel:+2348023467360' style='color: inherit; text-decoration: underline; font-weight: 600;'>+234 802 346 7360</a>.");
+            return;
+          }
+
+          if (isCodeUsed(val)) {
+            showPinError("This PIN (<strong>" + val + "</strong>) has already been used to confirm attendance. Please contact us at <a href='tel:+2348023467360' style='color: inherit; text-decoration: underline; font-weight: 600;'>+234 802 346 7360</a>.");
             return;
           }
 
           currentCode = val;
-          if (pinErrorMsg) pinErrorMsg.style.display = 'none';
+          hidePinError();
           evaluateAndDisplayRsvpState(currentCode, true);
         }
 
@@ -1799,6 +1935,29 @@
             e.preventDefault();
             verifyPinInput();
           }
+        });
+      }
+
+      // Switch PIN handlers
+      if (btnChangePin) {
+        btnChangePin.addEventListener('click', function() {
+          currentCode = '';
+          if (inputPinCode) {
+            inputPinCode.value = '';
+            inputPinCode.focus();
+          }
+          evaluateAndDisplayRsvpState('', true);
+        });
+      }
+
+      if (btnTryDifferentPin) {
+        btnTryDifferentPin.addEventListener('click', function() {
+          currentCode = '';
+          if (inputPinCode) {
+            inputPinCode.value = '';
+            inputPinCode.focus();
+          }
+          evaluateAndDisplayRsvpState('', true);
         });
       }
 
