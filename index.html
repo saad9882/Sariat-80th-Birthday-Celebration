@@ -1836,7 +1836,6 @@
       var pinErrorBox = document.getElementById('pinErrorBox');
       var pinErrorMsg = document.getElementById('pinErrorMsg');
       var verifiedPinLabel = document.getElementById('verifiedPinLabel');
-      var btnChangePin = document.getElementById('btnChangePin');
       var btnTryDifferentPin = document.getElementById('btnTryDifferentPin');
 
       function hidePinError() {
@@ -1934,18 +1933,6 @@
             e.preventDefault();
             verifyPinInput();
           }
-        });
-      }
-
-      // Switch PIN handlers
-      if (btnChangePin) {
-        btnChangePin.addEventListener('click', function() {
-          currentCode = '';
-          if (inputPinCode) {
-            inputPinCode.value = '';
-            inputPinCode.focus();
-          }
-          evaluateAndDisplayRsvpState('', true);
         });
       }
 
