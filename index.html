@@ -1467,7 +1467,7 @@
     <section class="page page-4" id="page4">
       <div class="page-content">
 
-        <!-- LOCKED LOCATION CARD (SHOWN UNTIL VALID PIN IS ENTERED) -->
+        <!-- LOCKED LOCATION CARD (INDICATOR ONLY - UNLOCKED VIA RSVP PIN) -->
         <div id="locationLockedCard" class="pin-gateway-card" style="display: block; text-align: center; width: 100%;">
           <div class="section-eyebrow" style="letter-spacing: 0.24em; font-size: 12.5px; color: #B6717C; text-transform: uppercase; font-family: 'Cinzel', serif; margin-bottom: 4px;">Exclusive Access</div>
           <h2 class="section-title" style="font-family: 'Cinzel', serif; font-size: 34px; letter-spacing: 0.08em; font-weight: 400; color: #2C1810; margin: 0 0 6px;">Event Location</h2>
@@ -1482,29 +1482,13 @@
           <div style="font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 21px; color: #3A231C; margin-bottom: 6px;">
             Location Hidden for Guest Privacy
           </div>
-          <p style="font-family: 'Jost', sans-serif; font-size: 13.5px; color: #7A6B63; margin-bottom: 22px; line-height: 1.55;">
-            To view venue details and map directions, please enter your invitation PIN below.
+          <p style="font-family: 'Jost', sans-serif; font-size: 13.5px; color: #7A6B63; margin-bottom: 24px; line-height: 1.55;">
+            The event location is private and reserved for invited guests.<br>
+            Please enter your invitation PIN in the <strong>RSVP section</strong> below to reveal venue details &amp; map directions.
           </p>
-          <div class="form-group" style="max-width: 280px; margin: 0 auto 18px;">
-            <input type="text" id="locationInputPinCode" class="pin-input-box" placeholder="• • • •" maxlength="12"
-              autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false">
-          </div>
-          <button type="button" id="btnVerifyLocationPin" class="btn-pin-continue">
-            <span>UNLOCK LOCATION &rarr;</span>
-          </button>
-
-          <!-- Error Alert Container -->
-          <div id="locationPinErrorBox" class="pin-error-box" style="display: none;">
-            <span id="locationPinErrorMsg">That PIN wasn't found. Please double-check your invitation or contact us at <a href="tel:+2348023467360" style="color: inherit; text-decoration: underline; font-weight: 600;">+234 802 346 7360</a>.</span>
-          </div>
-
-          <!-- Divider & Contact info -->
-          <div class="pin-footer-divider">
-            <span>DON'T HAVE YOUR PIN?</span>
-          </div>
-          <div style="font-family: 'Jost', sans-serif; font-size: 13px; color: #7A6B63;">
-            Please contact Mrs. Abiola Ajani at <a href="tel:+2348023467360" style="color: var(--maroon); font-weight: 600; text-decoration: none;">+234 802 346 7360</a>
-          </div>
+          <a href="#page6" class="btn-pin-continue" style="text-decoration: none; display: inline-flex; align-items: center; justify-content: center;">
+            <span>GO TO RSVP TO ENTER PIN &rarr;</span>
+          </a>
         </div>
 
         <!-- UNLOCKED LOCATION CONTENT (SHOWN ONLY WHEN VALID PIN IS ENTERED) -->
@@ -1962,30 +1946,18 @@
 
       var locationLockedCard = document.getElementById('locationLockedCard');
       var locationUnlockedContent = document.getElementById('locationUnlockedContent');
-      var locationInputPinCode = document.getElementById('locationInputPinCode');
-      var btnVerifyLocationPin = document.getElementById('btnVerifyLocationPin');
-      var locationPinErrorBox = document.getElementById('locationPinErrorBox');
-      var locationPinErrorMsg = document.getElementById('locationPinErrorMsg');
 
       var failedAttempts = 0;
       var lockoutTimer = null;
 
-      function hidePinErrors() {
+      function hidePinError() {
         if (pinErrorBox) pinErrorBox.style.display = 'none';
-        if (locationPinErrorBox) locationPinErrorBox.style.display = 'none';
       }
 
       function showPinError(messageHtml) {
         if (pinErrorBox && pinErrorMsg) {
           pinErrorMsg.innerHTML = messageHtml;
           pinErrorBox.style.display = 'block';
-        }
-      }
-
-      function showLocationPinError(messageHtml) {
-        if (locationPinErrorBox && locationPinErrorMsg) {
-          locationPinErrorMsg.innerHTML = messageHtml;
-          locationPinErrorBox.style.display = 'block';
         }
       }
 
@@ -2001,9 +1973,6 @@
         if (locationLockedCard) locationLockedCard.style.display = 'none';
         if (locationUnlockedContent) {
           locationUnlockedContent.style.display = 'block';
-          if (options.scrollTarget === 'location') {
-            locationUnlockedContent.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          }
         }
 
         // 2. Sync RSVP Section
@@ -2040,7 +2009,6 @@
       // Ensure input fields are reset initially if not unlocked
       if (!verifiedCode) {
         if (inputPinCode) inputPinCode.value = '';
-        if (locationInputPinCode) locationInputPinCode.value = '';
         if (rsvpPinPrompt) {
           rsvpPinPrompt.style.display = 'block';
           rsvpPinPrompt.classList.add('visible');
@@ -2049,60 +2017,6 @@
         if (rsvpCardForm) rsvpCardForm.style.display = 'none';
         if (rsvpAlreadySubmitted) rsvpAlreadySubmitted.style.display = 'none';
         if (locationUnlockedContent) locationUnlockedContent.style.display = 'none';
-      }
-
-      // Handler for Location PIN Verification
-      if (btnVerifyLocationPin && locationInputPinCode) {
-        function verifyLocationPinInput() {
-          var val = locationInputPinCode.value.trim().toUpperCase();
-          if (!val) {
-            showLocationPinError('Please enter your invitation PIN.');
-            locationInputPinCode.focus();
-            return;
-          }
-
-          if (!isValidCode(val)) {
-            failedAttempts++;
-            if (failedAttempts >= 3) {
-              var remainingSeconds = 45;
-              locationInputPinCode.disabled = true;
-              btnVerifyLocationPin.disabled = true;
-              showLocationPinError("Too many attempts. Please wait <strong id='locationLockoutCountdown'>" + remainingSeconds + "</strong> seconds before trying again.");
-
-              clearInterval(lockoutTimer);
-              lockoutTimer = setInterval(function () {
-                remainingSeconds--;
-                var el = document.getElementById('locationLockoutCountdown');
-                if (el) el.textContent = remainingSeconds;
-                if (remainingSeconds <= 0) {
-                  clearInterval(lockoutTimer);
-                  failedAttempts = 0;
-                  locationInputPinCode.disabled = false;
-                  btnVerifyLocationPin.disabled = false;
-                  hidePinErrors();
-                  locationInputPinCode.focus();
-                }
-              }, 1000);
-              return;
-            }
-
-            showLocationPinError("That PIN wasn't found. Please double-check your invitation or contact us at <a href='tel:+2348023467360' style='color: inherit; text-decoration: underline; font-weight: 600;'>+234 802 346 7360</a>.");
-            return;
-          }
-
-          // PIN is valid! Unlock both location and RSVP
-          failedAttempts = 0;
-          hidePinErrors();
-          unlockEventContent(val, { scrollTarget: 'location' });
-        }
-
-        btnVerifyLocationPin.addEventListener('click', verifyLocationPinInput);
-        locationInputPinCode.addEventListener('keypress', function (e) {
-          if (e.key === 'Enter') {
-            e.preventDefault();
-            verifyLocationPinInput();
-          }
-        });
       }
 
       // Handler for RSVP PIN Verification
@@ -2133,7 +2047,7 @@
                   failedAttempts = 0;
                   inputPinCode.disabled = false;
                   btnVerifyPin.disabled = false;
-                  hidePinErrors();
+                  hidePinError();
                   inputPinCode.focus();
                 }
               }, 1000);
@@ -2146,7 +2060,7 @@
 
           // PIN is valid! Unlock both location and RSVP
           failedAttempts = 0;
-          hidePinErrors();
+          hidePinError();
           unlockEventContent(val, { scrollTarget: 'rsvp' });
         }
 
