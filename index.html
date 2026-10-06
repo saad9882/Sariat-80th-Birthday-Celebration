@@ -1467,7 +1467,7 @@
     <section class="page page-4" id="page4">
       <div class="page-content">
 
-        <!-- LOCKED LOCATION CARD (INDICATOR ONLY - UNLOCKED VIA RSVP PIN) -->
+        <!-- LOCKED LOCATION CARD (WITH DIRECT PIN ENTRY GATEWAY) -->
         <div id="locationLockedCard" class="pin-gateway-card" style="display: block; text-align: center; width: 100%;">
           <div class="section-eyebrow" style="letter-spacing: 0.24em; font-size: 12.5px; color: #B6717C; text-transform: uppercase; font-family: 'Cinzel', serif; margin-bottom: 4px;">Exclusive Access</div>
           <h2 class="section-title" style="font-family: 'Cinzel', serif; font-size: 34px; letter-spacing: 0.08em; font-weight: 400; color: #2C1810; margin: 0 0 6px;">Event Location</h2>
@@ -1480,15 +1480,33 @@
           </div>
 
           <div style="font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 21px; color: #3A231C; margin-bottom: 6px;">
-            Location Hidden for Guest Privacy
+            Enter your invitation PIN
           </div>
-          <p style="font-family: 'Jost', sans-serif; font-size: 13.5px; color: #7A6B63; margin-bottom: 24px; line-height: 1.55;">
+          <p style="font-family: 'Jost', sans-serif; font-size: 13.5px; color: #7A6B63; margin-bottom: 20px; line-height: 1.55;">
             The event location is private and reserved for invited guests.<br>
-            Please enter your invitation PIN in the <strong>RSVP section</strong> below to reveal venue details &amp; map directions.
+            Please enter your invitation PIN below to reveal venue details &amp; map directions.
           </p>
-          <a href="#page6" class="btn-pin-continue" style="text-decoration: none; display: inline-flex; align-items: center; justify-content: center;">
-            <span>GO TO RSVP TO ENTER PIN &rarr;</span>
-          </a>
+
+          <div class="form-group" style="max-width: 280px; margin: 0 auto 18px;">
+            <input type="text" id="inputLocationPinCode" class="pin-input-box" placeholder="• • • •" maxlength="12"
+              autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false">
+          </div>
+          <button type="button" id="btnVerifyLocationPin" class="btn-pin-continue">
+            <span>UNLOCK LOCATION &amp; RSVP &rarr;</span>
+          </button>
+
+          <!-- Error Alert Container -->
+          <div id="locationPinErrorBox" class="pin-error-box" style="display: none;">
+            <span id="locationPinErrorMsg">That PIN wasn't found. Please double-check your invitation or contact us at <a href="tel:+2348023467360" style="color: inherit; text-decoration: underline; font-weight: 600;">+234 802 346 7360</a>.</span>
+          </div>
+
+          <!-- Divider & Contact info -->
+          <div class="pin-footer-divider">
+            <span>DON'T HAVE YOUR PIN?</span>
+          </div>
+          <div style="font-family: 'Jost', sans-serif; font-size: 13px; color: #7A6B63;">
+            Please contact Mrs. Abiola Ajani at <a href="tel:+2348023467360" style="color: var(--maroon); font-weight: 600; text-decoration: none;">+234 802 346 7360</a>
+          </div>
         </div>
 
         <!-- UNLOCKED LOCATION CONTENT (SHOWN ONLY WHEN VALID PIN IS ENTERED) -->
@@ -1629,22 +1647,6 @@
                 <option value="yes">Accepts with pleasure</option>
                 <option value="no">Declines with regret</option>
               </select>
-            </div>
-
-            <!-- Bringing Additional Guest (+1) Option -->
-            <div class="form-group" id="groupHasGuest" style="display: none;">
-              <label for="rsvpHasGuest">Are you bringing an additional guest (+1)? *</label>
-              <select id="rsvpHasGuest" class="form-control">
-                <option value="no">No, attending alone (1 Person)</option>
-                <option value="yes">Yes, bringing 1 guest (+1) (2 People Total)</option>
-              </select>
-            </div>
-
-            <!-- Accompanying Guest Name (+1) -->
-            <div class="form-group" id="groupGuestName" style="display: none;">
-              <label for="rsvpGuestName">Name of Person Coming With You (+1) *</label>
-              <input type="text" id="rsvpGuestName" class="form-control"
-                placeholder="Enter full name of your guest (+1)">
             </div>
 
             <div class="form-group">
@@ -1946,18 +1948,27 @@
 
       var locationLockedCard = document.getElementById('locationLockedCard');
       var locationUnlockedContent = document.getElementById('locationUnlockedContent');
+      var inputLocationPinCode = document.getElementById('inputLocationPinCode');
+      var btnVerifyLocationPin = document.getElementById('btnVerifyLocationPin');
+      var locationPinErrorBox = document.getElementById('locationPinErrorBox');
+      var locationPinErrorMsg = document.getElementById('locationPinErrorMsg');
 
       var failedAttempts = 0;
       var lockoutTimer = null;
 
-      function hidePinError() {
+      function hidePinErrors() {
         if (pinErrorBox) pinErrorBox.style.display = 'none';
+        if (locationPinErrorBox) locationPinErrorBox.style.display = 'none';
       }
 
       function showPinError(messageHtml) {
         if (pinErrorBox && pinErrorMsg) {
           pinErrorMsg.innerHTML = messageHtml;
           pinErrorBox.style.display = 'block';
+        }
+        if (locationPinErrorBox && locationPinErrorMsg) {
+          locationPinErrorMsg.innerHTML = messageHtml;
+          locationPinErrorBox.style.display = 'block';
         }
       }
 
@@ -1966,13 +1977,16 @@
         options = options || {};
         verifiedCode = code;
         try {
-          localStorage.setItem('sariat80_unlocked_pin', code);
+          sessionStorage.setItem('sariat80_unlocked_pin', code);
         } catch (e) { }
 
         // 1. Reveal Location Section
         if (locationLockedCard) locationLockedCard.style.display = 'none';
         if (locationUnlockedContent) {
           locationUnlockedContent.style.display = 'block';
+          if (options.scrollTarget === 'location') {
+            locationUnlockedContent.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
         }
 
         // 2. Sync RSVP Section
@@ -1998,9 +2012,14 @@
         }
       }
 
-      // Restore session unlock state on load if available
+      // Clean up old persistent localStorage unlock if present
       try {
-        var savedPin = localStorage.getItem('sariat80_unlocked_pin');
+        localStorage.removeItem('sariat80_unlocked_pin');
+      } catch (e) { }
+
+      // Restore session unlock state ONLY if unlocked within current session
+      try {
+        var savedPin = sessionStorage.getItem('sariat80_unlocked_pin');
         if (savedPin && isValidCode(savedPin)) {
           unlockEventContent(savedPin);
         }
@@ -2009,6 +2028,7 @@
       // Ensure input fields are reset initially if not unlocked
       if (!verifiedCode) {
         if (inputPinCode) inputPinCode.value = '';
+        if (inputLocationPinCode) inputLocationPinCode.value = '';
         if (rsvpPinPrompt) {
           rsvpPinPrompt.style.display = 'block';
           rsvpPinPrompt.classList.add('visible');
@@ -2019,97 +2039,76 @@
         if (locationUnlockedContent) locationUnlockedContent.style.display = 'none';
       }
 
-      // Handler for RSVP PIN Verification
-      if (btnVerifyPin && inputPinCode) {
-        function verifyPinInput() {
-          var val = inputPinCode.value.trim().toUpperCase();
-          if (!val) {
-            showPinError('Please enter your invitation PIN.');
-            inputPinCode.focus();
-            return;
-          }
-
-          if (!isValidCode(val)) {
-            failedAttempts++;
-            if (failedAttempts >= 3) {
-              var remainingSeconds = 45;
-              inputPinCode.disabled = true;
-              btnVerifyPin.disabled = true;
-              showPinError("Too many attempts. Please wait <strong id='lockoutCountdown'>" + remainingSeconds + "</strong> seconds before trying again.");
-
-              clearInterval(lockoutTimer);
-              lockoutTimer = setInterval(function () {
-                remainingSeconds--;
-                var el = document.getElementById('lockoutCountdown');
-                if (el) el.textContent = remainingSeconds;
-                if (remainingSeconds <= 0) {
-                  clearInterval(lockoutTimer);
-                  failedAttempts = 0;
-                  inputPinCode.disabled = false;
-                  btnVerifyPin.disabled = false;
-                  hidePinError();
-                  inputPinCode.focus();
-                }
-              }, 1000);
-              return;
-            }
-
-            showPinError("That PIN wasn't found. Please double-check your invitation or contact us at <a href='tel:+2348023467360' style='color: inherit; text-decoration: underline; font-weight: 600;'>+234 802 346 7360</a>.");
-            return;
-          }
-
-          // PIN is valid! Unlock both location and RSVP
-          failedAttempts = 0;
-          hidePinError();
-          unlockEventContent(val, { scrollTarget: 'rsvp' });
+      // Handler for PIN Verification (Works for both Location and RSVP PIN inputs)
+      function processPinVerification(inputElem, scrollTarget) {
+        if (!inputElem) return;
+        var val = inputElem.value.trim().toUpperCase();
+        if (!val) {
+          showPinError('Please enter your invitation PIN.');
+          inputElem.focus();
+          return;
         }
 
-        btnVerifyPin.addEventListener('click', verifyPinInput);
+        if (!isValidCode(val)) {
+          failedAttempts++;
+          if (failedAttempts >= 3) {
+            var remainingSeconds = 45;
+            if (inputPinCode) inputPinCode.disabled = true;
+            if (btnVerifyPin) btnVerifyPin.disabled = true;
+            if (inputLocationPinCode) inputLocationPinCode.disabled = true;
+            if (btnVerifyLocationPin) btnVerifyLocationPin.disabled = true;
+
+            showPinError("Too many attempts. Please wait <strong id='lockoutCountdown'>" + remainingSeconds + "</strong> seconds before trying again.");
+
+            clearInterval(lockoutTimer);
+            lockoutTimer = setInterval(function () {
+              remainingSeconds--;
+              var el = document.getElementById('lockoutCountdown');
+              if (el) el.textContent = remainingSeconds;
+              if (remainingSeconds <= 0) {
+                clearInterval(lockoutTimer);
+                failedAttempts = 0;
+                if (inputPinCode) inputPinCode.disabled = false;
+                if (btnVerifyPin) btnVerifyPin.disabled = false;
+                if (inputLocationPinCode) inputLocationPinCode.disabled = false;
+                if (btnVerifyLocationPin) btnVerifyLocationPin.disabled = false;
+                hidePinErrors();
+                inputElem.focus();
+              }
+            }, 1000);
+            return;
+          }
+
+          showPinError("That PIN wasn't found. Please double-check your invitation or contact us at <a href='tel:+2348023467360' style='color: inherit; text-decoration: underline; font-weight: 600;'>+234 802 346 7360</a>.");
+          return;
+        }
+
+        // PIN is valid! Unlock both location and RSVP
+        failedAttempts = 0;
+        hidePinErrors();
+        unlockEventContent(val, { scrollTarget: scrollTarget });
+      }
+
+      if (btnVerifyPin && inputPinCode) {
+        btnVerifyPin.addEventListener('click', function () {
+          processPinVerification(inputPinCode, 'rsvp');
+        });
         inputPinCode.addEventListener('keypress', function (e) {
           if (e.key === 'Enter') {
             e.preventDefault();
-            verifyPinInput();
+            processPinVerification(inputPinCode, 'rsvp');
           }
         });
       }
 
-      // DYNAMIC FORM FIELDS FOR ATTENDANCE & ACCOMPANYING GUEST (+1)
-      var rsvpAttending = document.getElementById('rsvpAttending');
-      var groupHasGuest = document.getElementById('groupHasGuest');
-      var rsvpHasGuest = document.getElementById('rsvpHasGuest');
-      var groupGuestName = document.getElementById('groupGuestName');
-      var rsvpGuestName = document.getElementById('rsvpGuestName');
-
-      if (rsvpAttending) {
-        rsvpAttending.addEventListener('change', function () {
-          if (rsvpAttending.value === 'yes') {
-            if (groupHasGuest) groupHasGuest.style.display = 'block';
-            if (rsvpHasGuest && rsvpHasGuest.value === 'yes') {
-              if (groupGuestName) groupGuestName.style.display = 'block';
-              if (rsvpGuestName) rsvpGuestName.required = true;
-            } else {
-              if (groupGuestName) groupGuestName.style.display = 'none';
-              if (rsvpGuestName) rsvpGuestName.required = false;
-            }
-          } else {
-            if (groupHasGuest) groupHasGuest.style.display = 'none';
-            if (groupGuestName) groupGuestName.style.display = 'none';
-            if (rsvpGuestName) rsvpGuestName.required = false;
-          }
+      if (btnVerifyLocationPin && inputLocationPinCode) {
+        btnVerifyLocationPin.addEventListener('click', function () {
+          processPinVerification(inputLocationPinCode, 'location');
         });
-      }
-
-      if (rsvpHasGuest) {
-        rsvpHasGuest.addEventListener('change', function () {
-          if (rsvpHasGuest.value === 'yes') {
-            if (groupGuestName) groupGuestName.style.display = 'block';
-            if (rsvpGuestName) rsvpGuestName.required = true;
-          } else {
-            if (groupGuestName) groupGuestName.style.display = 'none';
-            if (rsvpGuestName) {
-              rsvpGuestName.required = false;
-              rsvpGuestName.value = '';
-            }
+        inputLocationPinCode.addEventListener('keypress', function (e) {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            processPinVerification(inputLocationPinCode, 'location');
           }
         });
       }
@@ -2211,19 +2210,8 @@
 
           var name = document.getElementById('rsvpName').value.trim();
           var attendance = document.getElementById('rsvpAttending').value;
-          var hasGuestEl = document.getElementById('rsvpHasGuest');
-          var hasGuest = hasGuestEl ? hasGuestEl.value : 'no';
-          var guestNameEl = document.getElementById('rsvpGuestName');
-          var guestName = guestNameEl ? guestNameEl.value.trim() : '';
           var message = document.getElementById('rsvpMessage').value.trim();
-          if (attendance === 'yes' && hasGuest === 'yes' && !guestName) {
-            alert('Please enter the full name of your accompanying guest (+1).');
-            return;
-          }
-
           var attendanceText = attendance === 'yes' ? 'Accepts with pleasure' : 'Declines with regret';
-          var totalGuestsCount = (attendance === 'yes' && hasGuest === 'yes') ? 2 : 1;
-          var hasPlusOne = (attendance === 'yes' && hasGuest === 'yes');
 
           if (btnSubmitRsvp) {
             btnSubmitRsvp.disabled = true;
@@ -2269,9 +2257,6 @@
               "One-Time Code Used": activeCode,
               "Invited Guest Name": name,
               "Attendance Status": attendanceText,
-              "Bringing Accompanying Guest (+1)": hasPlusOne ? 'Yes (1 Additional Guest)' : 'No (Attending Alone)',
-              "Accompanying Guest Name": hasPlusOne ? guestName : 'N/A',
-              "Total Attending": totalGuestsCount + ' Person(s)',
               "Warm Wishes for Mama": message ? message : 'No message attached'
             })
           })
