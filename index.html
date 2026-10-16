@@ -1913,28 +1913,211 @@
         if (p) AUTHORIZED_CODES_MAP[p.trim().toUpperCase()] = true;
       }
 
+      // =====================================================
+      // ONE CODE ONE LOGIN SECURITY & TRACKING SYSTEM
+      // =====================================================
+      var CLOUD_STORAGE_URL = 'https://extendsclass.com/api/json-storage/bin/efcdaca';
+
+      // Unique device/client identifier to enforce "one code, one login" across devices
+      function getClientId() {
+        var cid = '';
+        try {
+          cid = localStorage.getItem('sariat80_client_id');
+          if (!cid) {
+            cid = 'client_' + Math.random().toString(36).substring(2, 10) + Date.now().toString(36);
+            localStorage.setItem('sariat80_client_id', cid);
+          }
+        } catch (e) {
+          cid = 'client_session_' + Date.now();
+        }
+        return cid;
+      }
+
       function isValidCode(code) {
         if (!code) return false;
         return !!AUTHORIZED_CODES_MAP[code.trim().toUpperCase()];
       }
 
-      function isCodeUsed(code) {
-        if (!code) return false;
+      // Check code usage status:
+      // - 'unused': Not used by anyone yet
+      // - 'own_session': Claimed by this exact device/client
+      // - 'used_by_other': Already claimed/used by someone else
+      function checkCodeStatus(code) {
+        if (!code) return 'unused';
+        var cleanCode = code.trim().toUpperCase();
+        var myClientId = getClientId();
+        var activeSessionPin = '';
+        try {
+          activeSessionPin = (sessionStorage.getItem('sariat80_unlocked_pin') || '').trim().toUpperCase();
+        } catch (e) { }
+
         try {
           var usedMap = JSON.parse(localStorage.getItem('sariat80_used_codes') || '{}');
-          return !!usedMap[code];
+          var record = usedMap[cleanCode];
+          if (!record) return 'unused';
+
+          // Handle legacy format (simple boolean or missing clientId)
+          if (typeof record === 'boolean' || !record.clientId) {
+            if (activeSessionPin === cleanCode) {
+              return 'own_session';
+            }
+            return 'used_by_other';
+          }
+
+          if (record.clientId === myClientId || activeSessionPin === cleanCode) {
+            return 'own_session';
+          }
+
+          return 'used_by_other';
+        } catch (e) {
+          return 'unused';
+        }
+      }
+
+      function isCodeUsed(code) {
+        var status = checkCodeStatus(code);
+        return status === 'used_by_other';
+      }
+
+      function isCodeRsvpSubmitted(code) {
+        if (!code) return false;
+        var cleanCode = code.trim().toUpperCase();
+        try {
+          var usedMap = JSON.parse(localStorage.getItem('sariat80_used_codes') || '{}');
+          var record = usedMap[cleanCode];
+          if (!record) return false;
+          return record.status === 'submitted' || record.rsvpSubmitted === true;
         } catch (e) {
           return false;
         }
       }
 
-      function markCodeAsUsed(code, guestName) {
+      // Sync latest used codes from the cloud in the background
+      function syncCloudUsedCodes(callback) {
+        if (!window.fetch) {
+          if (callback) callback();
+          return;
+        }
+
+        fetch(CLOUD_STORAGE_URL + '?nocache=' + Date.now(), {
+          cache: 'no-store'
+        })
+          .then(function (res) { return res.json(); })
+          .then(function (data) {
+            if (data && typeof data === 'object') {
+              var remoteUsed = data.used || data;
+              var localUsed = {};
+              try {
+                localUsed = JSON.parse(localStorage.getItem('sariat80_used_codes') || '{}');
+              } catch (e) { }
+
+              var merged = Object.assign({}, remoteUsed, localUsed);
+              try {
+                localStorage.setItem('sariat80_used_codes', JSON.stringify(merged));
+              } catch (e) { }
+            }
+            if (callback) callback();
+          })
+          .catch(function (err) {
+            console.warn('Cloud sync notice (offline/local fallback):', err);
+            if (callback) callback();
+          });
+      }
+
+      // Push updated code status to cloud store
+      function pushCodeToCloud(code, recordData, callback) {
+        if (!window.fetch) {
+          if (callback) callback();
+          return;
+        }
+
+        fetch(CLOUD_STORAGE_URL + '?nocache=' + Date.now(), {
+          cache: 'no-store'
+        })
+          .then(function (res) { return res.json(); })
+          .then(function (data) {
+            var currentUsed = (data && data.used) ? data.used : {};
+            var localUsed = {};
+            try {
+              localUsed = JSON.parse(localStorage.getItem('sariat80_used_codes') || '{}');
+            } catch (e) { }
+
+            var merged = Object.assign({}, currentUsed, localUsed);
+            merged[code] = recordData;
+
+            return fetch(CLOUD_STORAGE_URL, {
+              method: 'PUT',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({ used: merged })
+            });
+          })
+          .then(function () {
+            if (callback) callback();
+          })
+          .catch(function (err) {
+            console.warn('Cloud push notice:', err);
+            if (callback) callback();
+          });
+      }
+
+      // Claim code for one login immediately
+      function claimCodeLogin(code, callback) {
         if (!code) return;
+        var cleanCode = code.trim().toUpperCase();
+        var myClientId = getClientId();
+
+        var localUsed = {};
         try {
-          var usedMap = JSON.parse(localStorage.getItem('sariat80_used_codes') || '{}');
-          usedMap[code] = { name: guestName, date: new Date().toISOString() };
-          localStorage.setItem('sariat80_used_codes', JSON.stringify(usedMap));
+          localUsed = JSON.parse(localStorage.getItem('sariat80_used_codes') || '{}');
         } catch (e) { }
+
+        var existingRecord = localUsed[cleanCode] || {};
+        localUsed[cleanCode] = {
+          clientId: existingRecord.clientId || myClientId,
+          status: existingRecord.status || 'claimed',
+          loginDate: existingRecord.loginDate || new Date().toISOString(),
+          name: existingRecord.name || 'Invited Guest'
+        };
+
+        try {
+          localStorage.setItem('sariat80_used_codes', JSON.stringify(localUsed));
+        } catch (e) { }
+
+        pushCodeToCloud(cleanCode, localUsed[cleanCode], callback);
+      }
+
+      // Mark code as having confirmed attendance
+      function recordRsvpSubmission(code, guestName, attendanceText, callback) {
+        if (!code) return;
+        var cleanCode = code.trim().toUpperCase();
+        var myClientId = getClientId();
+
+        var localUsed = {};
+        try {
+          localUsed = JSON.parse(localStorage.getItem('sariat80_used_codes') || '{}');
+        } catch (e) { }
+
+        localUsed[cleanCode] = {
+          clientId: myClientId,
+          status: 'submitted',
+          rsvpSubmitted: true,
+          name: guestName,
+          attendance: attendanceText,
+          date: new Date().toISOString()
+        };
+
+        try {
+          localStorage.setItem('sariat80_used_codes', JSON.stringify(localUsed));
+        } catch (e) { }
+
+        pushCodeToCloud(cleanCode, localUsed[cleanCode], callback);
+      }
+
+      // Backward compatibility function
+      function markCodeAsUsed(code, guestName) {
+        claimCodeLogin(code);
       }
 
       var verifiedCode = '';
@@ -1991,7 +2174,7 @@
 
         // 2. Sync RSVP Section
         if (rsvpPinPrompt) rsvpPinPrompt.style.display = 'none';
-        if (isCodeUsed(code)) {
+        if (isCodeRsvpSubmitted(code)) {
           if (rsvpCardForm) rsvpCardForm.style.display = 'none';
           if (rsvpAlreadySubmitted) {
             rsvpAlreadySubmitted.style.display = 'block';
@@ -2021,9 +2204,17 @@
       try {
         var savedPin = sessionStorage.getItem('sariat80_unlocked_pin');
         if (savedPin && isValidCode(savedPin)) {
-          unlockEventContent(savedPin);
+          var status = checkCodeStatus(savedPin);
+          if (status !== 'used_by_other') {
+            unlockEventContent(savedPin);
+          } else {
+            sessionStorage.removeItem('sariat80_unlocked_pin');
+          }
         }
       } catch (e) { }
+
+      // Background cloud sync on page load
+      syncCloudUsedCodes();
 
       // Ensure input fields are reset initially if not unlocked
       if (!verifiedCode) {
@@ -2039,7 +2230,7 @@
         if (locationUnlockedContent) locationUnlockedContent.style.display = 'none';
       }
 
-      // Handler for PIN Verification (Works for both Location and RSVP PIN inputs)
+      // Handler for PIN Verification (Enforces "One Code One Login")
       function processPinVerification(inputElem, scrollTarget) {
         if (!inputElem) return;
         var val = inputElem.value.trim().toUpperCase();
@@ -2049,6 +2240,7 @@
           return;
         }
 
+        // 1. PIN must exist in the secret guest invitation list
         if (!isValidCode(val)) {
           failedAttempts++;
           if (failedAttempts >= 3) {
@@ -2083,10 +2275,60 @@
           return;
         }
 
-        // PIN is valid! Unlock both location and RSVP
-        failedAttempts = 0;
-        hidePinErrors();
-        unlockEventContent(val, { scrollTarget: scrollTarget });
+        // 2. Fast check: is this PIN already used by another device/guest?
+        var localStatus = checkCodeStatus(val);
+        if (localStatus === 'used_by_other') {
+          showPinError("This invitation PIN has already been used. Each invitation PIN is valid for one login only. Please contact <a href='tel:+2348023467360' style='color: inherit; text-decoration: underline; font-weight: 600;'>+234 802 346 7360</a> if you need assistance.");
+          return;
+        }
+
+        // If it's already this user's active session on this device, unlock directly
+        if (localStatus === 'own_session') {
+          failedAttempts = 0;
+          hidePinErrors();
+          unlockEventContent(val, { scrollTarget: scrollTarget });
+          return;
+        }
+
+        // 3. New login attempt: sync with cloud to prevent simultaneous use on another device
+        var activeBtn = scrollTarget === 'location' ? btnVerifyLocationPin : btnVerifyPin;
+        var originalBtnHtml = '';
+        if (activeBtn) {
+          activeBtn.disabled = true;
+          originalBtnHtml = activeBtn.innerHTML;
+          activeBtn.innerHTML = '<span>Verifying PIN...</span>';
+        }
+
+        var isDone = false;
+        function proceedAfterCheck(status) {
+          if (isDone) return;
+          isDone = true;
+          if (activeBtn) {
+            activeBtn.disabled = false;
+            activeBtn.innerHTML = originalBtnHtml;
+          }
+
+          if (status === 'used_by_other') {
+            showPinError("This invitation PIN has already been used. Each invitation PIN is valid for one login only. Please contact <a href='tel:+2348023467360' style='color: inherit; text-decoration: underline; font-weight: 600;'>+234 802 346 7360</a> if you need assistance.");
+            return;
+          }
+
+          // Code is valid and unused! Claim it for this login
+          failedAttempts = 0;
+          hidePinErrors();
+          claimCodeLogin(val);
+          unlockEventContent(val, { scrollTarget: scrollTarget });
+        }
+
+        // 1.5s timeout fallback so verification is always fast
+        var checkTimeout = setTimeout(function () {
+          proceedAfterCheck(checkCodeStatus(val));
+        }, 1500);
+
+        syncCloudUsedCodes(function () {
+          clearTimeout(checkTimeout);
+          proceedAfterCheck(checkCodeStatus(val));
+        });
       }
 
       if (btnVerifyPin && inputPinCode) {
@@ -2220,8 +2462,8 @@
 
           var activeCode = verifiedCode || ('PIN_' + Date.now());
 
-          // PERMANENTLY MARK CODE AS USED
-          markCodeAsUsed(activeCode, name);
+          // PERMANENTLY MARK CODE AS RSVP SUBMITTED (both locally and in cloud)
+          recordRsvpSubmission(activeCode, name, attendanceText);
 
           var isCompleted = false;
           function completeRsvp() {
